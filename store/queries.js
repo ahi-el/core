@@ -868,17 +868,6 @@ function insertMatch(match, options, cb) {
           });
       }
 
-      function upsertParsedMatch(cb) {
-        if (match.version) {
-          return upsert(trx, 'parsed_matches', {
-            match_id: match.match_id,
-          }, {
-            match_id: match.match_id,
-          }, cb);
-        }
-        return cb();
-      }
-
       function exit(err) {
         if (err) {
           console.error(err);
@@ -897,7 +886,6 @@ function insertMatch(match, options, cb) {
         upsertTeamMatch,
         upsertTeamRankings,
         upsertMatchLogs,
-        upsertParsedMatch,
       }, exit);
     });
   }
@@ -995,21 +983,21 @@ function insertMatch(match, options, cb) {
       return cb();
     }
     if (options.origin === 'scanner') {
-      return redis.rpush('countsQueue', JSON.stringify(match), cb);
+      return redis.lpush('countsQueue', JSON.stringify(match), cb);
     }
     return cb();
   }
 
   function decideScenarios(cb) {
     if (options.doScenarios) {
-      return redis.rpush('scenariosQueue', match.match_id, cb);
+      return redis.lpush('scenariosQueue', match.match_id, cb);
     }
     return cb();
   }
 
   function decideParsedBenchmarks(cb) {
     if (options.doParsedBenchmarks) {
-      return redis.rpush('parsedBenchmarksQueue', match.match_id, cb);
+      return redis.lpush('parsedBenchmarksQueue', match.match_id, cb);
     }
     return cb();
   }
@@ -1021,7 +1009,7 @@ function insertMatch(match, options, cb) {
         && p.account_id
         && p.account_id !== utility.getAnonymousAccountId()
         && config.ENABLE_RANDOM_MMR_UPDATE) {
-        redis.rpush('mmrQueue', JSON.stringify({
+        redis.lpush('mmrQueue', JSON.stringify({
           match_id: match.match_id,
           account_id: p.account_id,
         }), cb);

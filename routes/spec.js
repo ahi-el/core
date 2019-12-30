@@ -1406,7 +1406,7 @@ You can find data that can be used to convert hero and ability IDs and other inf
                 properties: {
                   hero_id: {
                     description: 'The ID value of the hero played',
-                    type: 'string',
+                    type: 'integer',
                   },
                   last_played: {
                     description: 'last_played',
@@ -2155,7 +2155,7 @@ You can find data that can be used to convert hero and ability IDs and other inf
         },
         route: () => '/players/:account_id/refresh',
         func: (req, res, cb) => {
-          redis.rpush('fhQueue', JSON.stringify({
+          redis.lpush('fhQueue', JSON.stringify({
             account_id: req.params.account_id || '1',
           }), (err, length) => {
             if (err) {
