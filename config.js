@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 
 if (fs.existsSync('.env')) {
-  dotenv.config();
+  dotenv.load();
 }
 
 const defaults = {

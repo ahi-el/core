@@ -7,7 +7,6 @@ const compression = require('compression');
 const session = require('cookie-session');
 const moment = require('moment');
 const express = require('express');
-const requestIp = require('request-ip');
 const passport = require('passport');
 const SteamStrategy = require('passport-steam').Strategy;
 const cors = require('cors');
@@ -92,8 +91,6 @@ app.route('/healthz').get((req, res) => {
 app.use(session(sessOptions));
 app.use(passport.initialize());
 app.use(passport.session());
-// Get client IP to use for rate limiting;
-app.use(requestIp.mw());
 
 // Dummy User ID for testing
 if (config.NODE_ENV === 'test') {
@@ -129,7 +126,9 @@ app.use((req, res, cb) => {
   }
 });
 app.use((req, res, cb) => {
-  const ip = req.clientIp;
+  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  [ip] = ip.replace(/^.*:/, '').split(',');
+
   res.locals.ip = ip;
 
   let rateLimit = '';
@@ -159,7 +158,6 @@ app.use((req, res, cb) => {
 
     res.set({
       'X-Rate-Limit-Remaining-Minute': rateLimit - resp[0],
-      'X-IP-Address': ip,
     });
     if (!res.locals.isAPIRequest) {
       res.set('X-Rate-Limit-Remaining-Month', config.API_FREE_LIMIT - Number(resp[2]));
